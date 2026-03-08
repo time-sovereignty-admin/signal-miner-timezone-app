@@ -2,15 +2,42 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: system-ui; padding: 16px; text-align: center; }
+    .tz { font-size: 1.2em; margin: 16px 0; font-weight: bold; }
+    .btn { display: inline-block; margin-top: 12px; padding: 12px 24px; background: #2481cc; color: #fff; text-decoration: none; border-radius: 8px; }
+  </style>
 </head>
 <body>
+  <p>Your timezone: <span class="tz" id="tz">...</span></p>
+  <p id="msg">Tap the button below to set it for your group.</p>
+  <a id="link" class="btn" href="#">Set Timezone</a>
   <script>
     var tg = window.Telegram.WebApp;
     tg.ready();
+    tg.expand();
     var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    tg.sendData(tz);
-    tg.close();
+    document.getElementById('tz').textContent = tz;
+    var params = new URLSearchParams(window.location.search);
+    var chatId = params.get('chat_id');
+    var bot = params.get('bot');
+    if (chatId && bot) {
+      var start = 'tz_' + tz + '~' + chatId;
+      if (start.length > 64) start = 'tz_UTC~' + chatId;
+      var url = 'https://t.me/' + bot + '?start=' + encodeURIComponent(start);
+      var a = document.getElementById('link');
+      a.href = url;
+      a.onclick = function(e) {
+        e.preventDefault();
+        tg.openTelegramLink(url);
+        tg.close();
+      };
+    } else {
+      tg.sendData(tz);
+      tg.close();
+    }
   </script>
 </body>
 </html>
