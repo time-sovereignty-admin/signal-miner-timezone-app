@@ -24,9 +24,12 @@
     var chatId = params.get('chat_id');
     var bot = params.get('bot');
     if (chatId && bot) {
-      var start = 'tz_' + tz + '~' + chatId;
-      if (start.length > 64) start = 'tz_UTC~' + chatId;
-      var url = 'https://t.me/' + bot + '?start=' + encodeURIComponent(start);
+      var payload = tz + '|' + chatId;
+      var b64 = btoa(unescape(encodeURIComponent(payload)));
+      var b64url = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      var start = 'tz_' + b64url;
+      if (start.length > 64) start = 'tz_' + btoa(unescape(encodeURIComponent('UTC|' + chatId))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      var url = 'https://t.me/' + bot + '?start=' + start;
       var a = document.getElementById('link');
       a.href = url;
       a.onclick = function(e) {
