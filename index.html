@@ -5,14 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { font-family: system-ui; padding: 16px; text-align: center; }
-    .tz { font-size: 1.2em; margin: 16px 0; font-weight: bold; }
-    .btn { display: inline-block; margin-top: 12px; padding: 12px 24px; background: #2481cc; color: #fff; text-decoration: none; border-radius: 8px; }
+    body { font-family: system-ui; padding: 24px 16px; text-align: center; background: #fff; color: #222; }
+    .detected { margin: 24px 0; }
+    .detected-label { font-size: 0.9em; color: #888; margin-bottom: 4px; }
+    .tz { font-size: 1.6em; font-weight: bold; color: #2481cc; }
+    .offset { font-size: 1em; color: #555; margin-top: 4px; }
+    .btn { display: inline-block; margin-top: 24px; padding: 14px 28px; background: #2481cc; color: #fff; text-decoration: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; }
+    .btn:active { background: #1a6baa; }
   </style>
 </head>
 <body>
-  <p>Your timezone: <span class="tz" id="tz">...</span></p>
-  <p id="msg">Tap the button below to set it for your group.</p>
+  <div class="detected">
+    <div class="detected-label">Detected timezone:</div>
+    <div class="tz" id="tz">...</div>
+    <div class="offset" id="offset"></div>
+  </div>
   <a id="link" class="btn" href="#">Set Timezone</a>
   <script>
     var tg = window.Telegram.WebApp;
@@ -20,6 +27,23 @@
     tg.expand();
     var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     document.getElementById('tz').textContent = tz;
+
+    // Show UTC offset
+    try {
+      var now = new Date();
+      var offsetMin = -now.getTimezoneOffset();
+      var sign = offsetMin >= 0 ? '+' : '-';
+      var absMin = Math.abs(offsetMin);
+      var h = Math.floor(absMin / 60);
+      var m = absMin % 60;
+      var offsetStr = 'UTC' + sign + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      document.getElementById('offset').textContent = offsetStr;
+    } catch (e) {}
+
+    // Update button text with detected timezone
+    var btnEl = document.getElementById('link');
+    btnEl.textContent = 'Set ' + tz;
+
     var params = new URLSearchParams(window.location.search);
     var chatId = params.get('chat_id');
     var bot = params.get('bot');
@@ -30,9 +54,8 @@
       var start = 'tz_' + b64url;
       if (start.length > 64) start = 'tz_' + btoa(unescape(encodeURIComponent('UTC|' + chatId))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       var url = 'https://t.me/' + bot + '?start=' + start;
-      var a = document.getElementById('link');
-      a.href = url;
-      a.onclick = function(e) {
+      btnEl.href = url;
+      btnEl.onclick = function(e) {
         e.preventDefault();
         tg.openTelegramLink(url);
         tg.close();
